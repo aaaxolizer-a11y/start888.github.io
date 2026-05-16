@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SilentCore</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #050507;
+            --bg2: #0a0a0f;
+            --card: #111118;
+            --card2: #16161f;
+            --accent: #7c3aed;
+            --accent2: #a78bfa;
+            --accent3: #c4b5fd;
+            --glow: rgba(124, 58, 237, 0.4);
+            --glow2: rgba(167, 139, 250, 0.2);
+            --text: #f8fafc;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: rgba(255,255,255,0.06);
+            --glass: rgba(17, 17, 24, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.05) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, -2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb-1 {
+            width: 300px; height: 300px;
+            background: var(--accent);
+            top: -100px; right: -100px;
+            animation: orbFloat1 15s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 200px; height: 200px;
+            background: #6366f1;
+            bottom: -50px; left: -50px;
+            animation: orbFloat2 18s ease-in-out infinite;
+        }
+        @keyframes orbFloat1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, 30px); }
+        }
+        @keyframes orbFloat2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, -20px); }
+        }
+
+        .container {
+            max-width: 440px;
+            margin: 0 auto;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 32px 0 24px;
+            position: relative;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 32px var(--glow);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 8px 32px var(--glow); }
+            50% { box-shadow: 0 8px 48px var(--glow), 0 0 80px rgba(124, 58, 237, 0.1); }
+        }
+        .logo-text {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle {
+            color: var(--text3);
+            font-size: 13px;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        /* Glass Cards */
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        .card:hover {
+            border-color: rgba(124, 58, 237, 0.2);
+            transform: translateY(-1px);
+        }
+        .card-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent2);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        /* Profile */
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .profile-row .label {
+            color: var(--text2);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .profile-row .label .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            background: rgba(124, 58, 237, 0.1);
+        }
+        .profile-row .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .profile-row .value.accent {
+            color: var(--accent2);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .badge.active {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .badge.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .badge.admin {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(99, 102, 241, 0.1));
+            color: var(--accent2);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+        .badge.user {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text2);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+        }
+
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 15px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn:active::after {
+            opacity: 1;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: white;
+            box-shadow: 0 4px 20px var(--glow);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 8px 32px var(--glow);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--card2);
+            color: var(--text2);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: rgba(124, 58, 237, 0.3);
+            color: var(--text);
+        }
+        .btn-buy {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Nav */
+        .nav {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            background: var(--card);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+        .nav-item {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text3);
+        }
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 2px 12px var(--glow);
+        }
+        .nav-item:not(.active):hover {
+            color: var(--text2);
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Input */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .input {
+            flex: 1;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            color: var(--text);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+        .input::placeholder {
+            color: var(--text3);
+        }
+
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Subscription card */
+        .sub-card {
+            text-align: center;
+            padding: 40px 24px;
+            position: relative;
+        }
+        .sub-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 18px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+        .sub-icon.active-sub {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+        }
+        .sub-icon.inactive-sub {
+            background: rgba(239, 68, 68, 0.08);
+        }
+        .sub-card .status {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .sub-card .expires {
+            color: var(--text3);
+            font-size: 13px;
+        }
+        .sub-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            color: var(--text);
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 85%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: rgba(16, 185, 129, 0.4); }
+        .toast.error { border-color: rgba(239, 68, 68, 0.4); }
+
+        /* Loading */
+        .loading { display: none; text-align: center; padding: 60px 20px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text3); font-size: 13px; }
+
+        /* Auth */
+        .auth-form { display: flex; flex-direction: column; gap: 12px; }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .auth-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .auth-header p {
+            color: var(--text3);
+            font-size: 13px;
+        }
+        .auth-divider {
+            text-align: center;
+            color: var(--text3);
+            font-size: 12px;
+            margin: 4px 0;
+        }
+
+        .mt-8 { margin-top: 8px; }
+        .mt-12 { margin-top: 12px; }
+        .mt-16 { margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-text">SilentCore</div>
+            <div class="subtitle" id="user-greeting">Загрузка...</div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Подключение к серверу...</div>
+        </div>
+
+        <!-- Auth Section -->
+        <div class="section" id="auth-section">
+            <div class="card">
+                <div class="auth-header">
+                    <h2>Вход в аккаунт</h2>
+                    <p>Введите данные для авторизации</p>
+                </div>
+                <div class="auth-form">
+                    <input class="input" id="auth-login" type="text" placeholder="Логин" autocomplete="off">
+                    <input class="input" id="auth-password" type="password" placeholder="Пароль">
+                    <button class="btn btn-primary mt-8" onclick="doLogin()">Войти</button>
+                    <div class="auth-divider">или</div>
+                    <button class="btn btn-secondary" onclick="showRegister()">Создать аккаунт</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Section -->
+        <div class="section" id="register-section">
+            <div class="card">
+                <div class="auth-header">
+                    <h2>Регистрация</h2>
+                    <p>Создайте новый аккаунт</p>
+                </div>
+                <div class="auth-form">
+                    <input class="input" id="reg-login" type="text" placeholder="Придумайте логин" autocomplete="off">
+                    <input class="input" id="reg-password" type="password" placeholder="Придумайте пароль">
+                    <button class="btn btn-primary mt-8" onclick="doRegister()">Создать</button>
+                    <div class="auth-divider">или</div>
+                    <button class="btn btn-secondary" onclick="showLogin()">Уже есть аккаунт</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Section -->
+        <div class="section" id="main-section">
+            <div class="nav">
+                <div class="nav-item active" onclick="switchTab('profile', this)">Профиль</div>
+                <div class="nav-item" onclick="switchTab('subscription', this)">Подписка</div>
+                <div class="nav-item" onclick="switchTab('key', this)">Ключ</div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="section active" id="tab-profile">
+                <div class="card">
+                    <div class="card-title">Информация</div>
+                    <div class="profile-info">
+                        <div class="profile-row">
+                            <span class="label"><span class="icon">🆔</span> UID</span>
+                            <span class="value accent" id="p-uid">—</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="label"><span class="icon">👤</span> Логин</span>
+                            <span class="value" id="p-login">—</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="label"><span class="icon">🎭</span> Роль</span>
+                            <span id="p-role"></span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="label"><span class="icon">🖥️</span> HWID</span>
+                            <span class="value" id="p-hwid" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis;">—</span>
+                        </div>
+                        <div class="profile-row">
+                            <span class="label"><span class="icon">📅</span> Дата</span>
+                            <span class="value" id="p-created">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Tab -->
+            <div class="section" id="tab-subscription">
+                <div class="card sub-card">
+                    <div class="sub-icon" id="sub-icon-wrap">💎</div>
+                    <div class="status" id="sub-status">—</div>
+                    <div class="expires" id="sub-expires">—</div>
+                    <div class="sub-timer" id="sub-timer" style="display:none;">
+                        <span>⏳</span>
+                        <span id="sub-timer-text">—</span>
+                    </div>
+                </div>
+                <a href="https://t.me/system_errored" class="btn btn-buy mt-12" style="text-decoration:none;">
+                    🛒 Купить подписку
+                </a>
+                <button class="btn btn-secondary mt-8" onclick="switchTab('key', document.querySelectorAll('.nav-item')[2])">
+                    🔑 Активировать ключ
+                </button>
+            </div>
+
+            <!-- Key Tab -->
+            <div class="section" id="tab-key">
+                <div class="card">
+                    <div class="card-title">Активация</div>
+                    <p style="color:var(--text3); font-size:13px; line-height:1.5;">
+                        Введите ключ для активации подписки
+                    </p>
+                    <div class="input-group">
+                        <input class="input" id="key-input" type="text" placeholder="SilentCore-XXXX-XXXX-XXXX">
+                    </div>
+                    <button class="btn btn-primary mt-16" onclick="activateKey()">Активировать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let tg;
+        try {
+            tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+            tg.setHeaderColor('#050507');
+            tg.setBackgroundColor('#050507');
+        } catch(e) {
+            tg = null;
+        }
+
+        const API_BASE = window.location.origin;
+        let userData = null;
+
+        async function init() {
+            showLoading(true);
+
+            if (tg && tg.initData) {
+                try {
+                    const res = await fetch(`${API_BASE}/webapp/me`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({initData: tg.initData})
+                    });
+                    const data = await res.json();
+                    if (data.success && data.user) {
+                        userData = data.user;
+                        renderProfile();
+                        showSection('main-section');
+                        showLoading(false);
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            showLoading(false);
+            showSection('auth-section');
+            document.getElementById('user-greeting').textContent = 'Добро пожаловать';
+        }
+
+        function renderProfile() {
+            if (!userData) return;
+            document.getElementById('user-greeting').textContent = userData.login;
+            document.getElementById('p-uid').textContent = `#${userData.id}`;
+            document.getElementById('p-login').textContent = userData.login;
+            document.getElementById('p-created').textContent = userData.created_at ? userData.created_at.split(' ')[0] : '—';
+
+            const hwid = userData.hwid;
+            document.getElementById('p-hwid').textContent = hwid ? hwid.substring(0, 20) + '...' : 'Не привязан';
+
+            const roleEl = document.getElementById('p-role');
+            roleEl.innerHTML = userData.is_admin
+                ? '<span class="badge admin">👑 Админ</span>'
+                : '<span class="badge user">👤 Юзер</span>';
+
+            // Subscription
+            const iconWrap = document.getElementById('sub-icon-wrap');
+            const timerEl = document.getElementById('sub-timer');
+
+            if (userData.subscription && userData.sub_expires) {
+                const expires = new Date(userData.sub_expires);
+                const now = new Date();
+                if (expires > now) {
+                    const days = Math.ceil((expires - now) / (1000*60*60*24));
+                    iconWrap.className = 'sub-icon active-sub';
+                    iconWrap.textContent = '💎';
+                    document.getElementById('sub-status').textContent = 'Подписка активна';
+                    document.getElementById('sub-status').style.color = 'var(--success)';
+                    document.getElementById('sub-expires').textContent = `До ${expires.toLocaleDateString('ru-RU')}`;
+                    timerEl.style.display = 'inline-flex';
+                    document.getElementById('sub-timer-text').textContent = `${days} дн. осталось`;
+                } else {
+                    setInactiveSub();
+                }
+            } else {
+                setInactiveSub();
+            }
+        }
+
+        function setInactiveSub() {
+            const iconWrap = document.getElementById('sub-icon-wrap');
+            iconWrap.className = 'sub-icon inactive-sub';
+            iconWrap.textContent = '🔒';
+            document.getElementById('sub-status').textContent = 'Нет подписки';
+            document.getElementById('sub-status').style.color = 'var(--text2)';
+            document.getElementById('sub-expires').textContent = 'Купите или активируйте ключ';
+            document.getElementById('sub-timer').style.display = 'none';
+        }
+
+        async function doLogin() {
+            const login = document.getElementById('auth-login').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!login || !password) { showToast('Заполните все поля', 'error'); return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/webapp/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({login, password, tg_id: tg?.initDataUnsafe?.user?.id || null})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData = data.user;
+                    renderProfile();
+                    showSection('main-section');
+                    showToast('Добро пожаловать! ✓', 'success');
+                } else {
+                    showToast(data.error || 'Ошибка входа', 'error');
+                }
+            } catch(e) {
+                showToast('Нет связи с сервером', 'error');
+            }
+        }
+
+        async function doRegister() {
+            const login = document.getElementById('reg-login').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            if (!login || !password) { showToast('Заполните все поля', 'error'); return; }
+            if (login.length < 3) { showToast('Логин — минимум 3 символа', 'error'); return; }
+            if (password.length < 4) { showToast('Пароль — минимум 4 символа', 'error'); return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/webapp/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({login, password, tg_id: tg?.initDataUnsafe?.user?.id || null})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData = data.user;
+                    renderProfile();
+                    showSection('main-section');
+                    showToast('Аккаунт создан! ✓', 'success');
+                } else {
+                    showToast(data.error || 'Ошибка', 'error');
+                }
+            } catch(e) {
+                showToast('Нет связи с сервером', 'error');
+            }
+        }
+
+        async function activateKey() {
+            const key = document.getElementById('key-input').value.trim();
+            if (!key) { showToast('Введите ключ', 'error'); return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/webapp/activate_key`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({key, tg_id: tg?.initDataUnsafe?.user?.id || userData?.tg_id || null})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userData = data.user;
+                    renderProfile();
+                    document.getElementById('key-input').value = '';
+                    showToast(`+${data.days} дней подписки ✓`, 'success');
+                } else {
+                    showToast(data.error || 'Ошибка', 'error');
+                }
+            } catch(e) {
+                showToast('Нет связи с сервером', 'error');
+            }
+        }
+
+        // UI
+        function showSection(id) {
+            ['auth-section', 'register-section', 'main-section'].forEach(s => {
+                document.getElementById(s).classList.remove('active');
+            });
+            document.getElementById(id).classList.add('active');
+        }
+        function showRegister() { showSection('register-section'); }
+        function showLogin() { showSection('auth-section'); }
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+        }
+
+        function showToast(msg, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
